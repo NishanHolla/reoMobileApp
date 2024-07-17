@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View, Text } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
 import { supabase } from '../utils/supabase';
 
@@ -7,27 +7,29 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   async function signInWithEmail() {
     setLoading(true);
-    console.log({ email, password });
-    const { error } = await supabase.auth.signIn({
+    setError('');
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) Alert.alert(error.message);
+    if (error) setError(error.message);
     setLoading(false);
   }
 
   async function signUpWithEmail() {
     setLoading(true);
+    setError('');
     const { error } = await supabase.auth.signUp({
       email,
       password,
     });
 
-    if (error) Alert.alert(error.message);
+    if (error) setError(error.message);
     setLoading(false);
   }
 
@@ -54,13 +56,16 @@ export default function Auth() {
           autoCapitalize="none"
         />
       </View>
+      {error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : null}
       <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Button mode="contained" disabled={loading} onPress={() => signInWithEmail()}>
+        <Button mode="contained" disabled={loading} onPress={signInWithEmail}>
           Sign in
         </Button>
       </View>
       <View style={styles.verticallySpaced}>
-        <Button mode="contained" disabled={loading} onPress={() => signUpWithEmail()}>
+        <Button mode="contained" disabled={loading} onPress={signUpWithEmail}>
           Sign up
         </Button>
       </View>
@@ -80,5 +85,9 @@ const styles = StyleSheet.create({
   },
   mt20: {
     marginTop: 20,
+  },
+  errorText: {
+    color: 'red',
+    marginTop: 10,
   },
 });

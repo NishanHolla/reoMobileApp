@@ -21,10 +21,7 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
   async function downloadImage(path: string) {
     try {
       const { data, error } = await supabase.storage.from('avatars').download(path);
-      
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       const fr = new FileReader();
       fr.readAsDataURL(data);
@@ -44,29 +41,21 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
         type: [DocumentPicker.types.images],
       });
 
-      const photo = {
-        uri: file.uri,
-        type: file.type,
-        name: file.name,
-      };
-
-      const formData = new FormData();
-      formData.append('file', photo);
-
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file[0].name.split('.').pop();
       const filePath = `${Math.random()}.${fileExt}`;
 
-      let { error } = await supabase.storage.from('avatars').upload(filePath, formData);
+      let { error } = await supabase.storage.from('avatars').upload(filePath, {
+        uri: file[0].uri,
+        type: file[0].type,
+        name: file[0].name,
+      });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       onUpload(filePath);
     } catch (error) {
       if (isCancel(error)) {
         console.warn('cancelled');
-        // User cancelled the picker, exit any dialogs or menus and move on
       } else if (isInProgress(error)) {
         console.warn('multiple pickers were opened, only the last will be considered');
       } else if (error instanceof Error) {
