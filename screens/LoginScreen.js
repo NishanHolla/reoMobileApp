@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Alert } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
-import { signInWithEmail } from './Auth';
+import { signInWithEmail } from '../components/Auth';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');

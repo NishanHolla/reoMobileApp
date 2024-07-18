@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import Video from 'react-native-video';
-import supabase from '../utils/supabase';
+import { FileSystem } from 'react-native-fs';
+import { supabase } from '../utils/supabase';
 
 const VideoPlayerScreen = () => {
   const [videos, setVideos] = useState([]);
@@ -17,21 +18,37 @@ const VideoPlayerScreen = () => {
       if (error) {
         throw error;
       }
-      const videoUrls = data.map(video => ({
+      const videoList = data.map(video => ({
         name: video.name,
-        url: supabase.storage.from('videos').getPublicUrl(`videos/${video.name}`).publicURL,
       }));
-      setVideos(videoUrls);
-      if (videoUrls.length > 0) {
-        setSelectedVideo(videoUrls[0].url);
-      }
+      setVideos(videoList);
+      console.log(videoList);
     } catch (error) {
       console.error('Error fetching videos:', error.message);
     }
   };
 
-  const playVideo = (videoUrl) => {
-    setSelectedVideo(videoUrl);
+  const downloadAndPlayVideo = async (videoName) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('videos/videos')
+        .download(videoName);
+      if (error) {
+        throw error;
+      }
+
+      const docDir = await FileSystem.DocumentDirectoryPath;
+      const filePath = `${docDir}/${videoName}`;
+
+      // Write downloaded data to temporary file
+      await FileSystem.writeFile(filePath, data);
+
+      // Create a temporary URL for the downloaded video
+      const videoUri = await FileSystem.uriForFilePath(filePath);
+      setSelectedVideo(videoUri);
+    } catch (error) {
+      console.error('Error downloading video:', error.message);
+    }
   };
 
   return (
@@ -48,7 +65,7 @@ const VideoPlayerScreen = () => {
       <FlatList
         data={videos}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => playVideo(item.url)}>
+          <TouchableOpacity onPress={() => downloadAndPlayVideo(item.name)}>
             <Text style={styles.videoItem}>{item.name}</Text>
           </TouchableOpacity>
         )}
